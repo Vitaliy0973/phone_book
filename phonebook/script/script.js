@@ -182,6 +182,20 @@ const data = [
     elem.append(...allRow);
   };
 
+  const createFooter = title => {
+    const footer = document.createElement('footer');
+    const footerContainer = createContainer();
+    const span = document.createElement('span');
+
+    span.textContent = `Все прова защищены ©${title}`;
+    footerContainer.append(span);
+
+    footer.classList.add('footer');
+    footer.append(footerContainer);
+
+    return footer;
+  };
+
   const renderPhoneBook = (app, title) => {
     const header = createHeader();
     const logo = createLogo(title);
@@ -200,11 +214,12 @@ const data = [
     ]);
     const table = createTable();
     const form = createForm();
+    const footer = createFooter(title);
 
     header.headerContainer.append(logo);
     main.mainContainer.append(buttonGroup.btnWrapper, table, form.overlay);
 
-    app.append(header, main);
+    app.append(header, main, footer);
 
     return {
       list: table.tbody,
