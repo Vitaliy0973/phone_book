@@ -92,8 +92,8 @@ const data = [
     thead.insertAdjacentHTML('beforeend', `
       <tr>
         <th class="delete">Удалить</th>
-        <th>Имя</th>
-        <th>Фамилия</th>
+        <th class="table__name">Имя</th>
+        <th class="table__surname">Фамилия</th>
         <th>Телефон</th>
         <th></th>
       </tr>
@@ -101,6 +101,7 @@ const data = [
 
     table.append(thead, tbody);
     table.tbody = tbody;
+    table.thead = thead;
 
     return table;
   };
@@ -163,6 +164,8 @@ const data = [
     const phoneLink = document.createElement('a');
     const tdEdit = document.createElement('td');
     const buttonEdit = document.createElement('button');
+
+    tr.classList.add('contact');
 
     tdDel.classList.add('delete');
     buttonDel.classList.add('del-icon');
@@ -234,8 +237,10 @@ const data = [
 
     return {
       list: table.tbody,
+      thead: table.thead,
       logo,
       btnAdd: buttonGroup.btns[0],
+      btnDel: buttonGroup.btns[1],
       formOverlay: form.overlay,
       form: form.form,
     };
@@ -253,10 +258,31 @@ const data = [
     });
   };
 
+  const sortTable = (target, list, arrow) => {
+    const i = target.classList.contains('table__name') ? 1 : 2;
+    let rows = Array.from(list.rows);
+
+    rows.sort((a, b) => {
+      const firstElem = a.cells[i].textContent;
+      const secondElem = b.cells[i].textContent;
+      return firstElem.localeCompare(secondElem);
+    });
+
+    while (list.firstChild) {
+      list.firstChild.remove();
+    }
+
+    if (arrow === 'up') {
+      rows = rows.reverse();
+    }
+
+    list.append(...rows);
+  };
+
   const init = (selectorApp, title) => {
     const app = document.querySelector(selectorApp);
     const phoneBook = renderPhoneBook(app, title);
-    const { list, logo, btnAdd, formOverlay, form } = phoneBook;
+    const { thead, list, logo, btnAdd, btnDel, formOverlay, form } = phoneBook;
 
     // Функционал
     const allRow = renderContacts(list, data);
@@ -267,12 +293,54 @@ const data = [
       formOverlay.classList.add('is-visible');
     });
 
-    form.addEventListener('click', event => {
-      event.stopImmediatePropagation();
+    formOverlay.addEventListener('click', e => {
+      if (e.target === formOverlay || e.target.classList.contains('close')) {
+        formOverlay.classList.remove('is-visible');
+      }
     });
 
-    formOverlay.addEventListener('click', () => {
-      formOverlay.classList.remove('is-visible');
+    btnDel.addEventListener('click', () => {
+      document.querySelectorAll('.delete').forEach(del => {
+        del.classList.toggle('is-visible');
+      });
+    });
+
+    list.addEventListener('click', e => {
+      if (e.target.closest('.del-icon')) {
+        e.target.closest('.contact').remove();
+      }
+    });
+
+    thead.addEventListener('click', e => {
+      const target = e.target;
+      if (target.closest('.table__name') || target.closest('.table__surname')) {
+        const cell = target.closest('.table__name') ??
+          target.closest('.table__surname');
+        const oldArrow = thead.querySelector('.table__arrow');
+        const cellArrow = cell.querySelector('.table__arrow');
+
+        if (oldArrow && oldArrow !== cellArrow) {
+          oldArrow.remove();
+        }
+
+        if (cellArrow) {
+          if (cell.dataset.sort === 'down') {
+            cellArrow.textContent = ' ▴';
+            cell.dataset.sort = 'up';
+          } else if (cell.dataset.sort === 'up') {
+            cellArrow.textContent = ' ▾';
+            cell.dataset.sort = 'down';
+          }
+        } else {
+          const arrow = document.createElement('span');
+          arrow.className = 'table__arrow';
+          arrow.textContent = ' ▾';
+          cell.append(arrow);
+          cell.dataset.sort = 'down';
+        }
+
+        sortTable(cell, list, cell.dataset.sort);
+      }
     });
   };
 
