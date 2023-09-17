@@ -284,6 +284,40 @@ const data = [
     list.append(...rows);
   };
 
+  const sortTableControl = (thead, list) => {
+    thead.addEventListener('click', e => {
+      const target = e.target;
+      if (target.closest('.table__name') || target.closest('.table__surname')) {
+        const cell = target.closest('.table__name') ??
+          target.closest('.table__surname');
+        const oldArrow = thead.querySelector('.table__arrow');
+        const cellArrow = cell.querySelector('.table__arrow');
+
+        if (oldArrow && oldArrow !== cellArrow) {
+          oldArrow.remove();
+        }
+
+        if (cellArrow) {
+          if (cell.dataset.sort === 'down') {
+            cellArrow.textContent = ' ▴';
+            cell.dataset.sort = 'up';
+          } else if (cell.dataset.sort === 'up') {
+            cellArrow.textContent = ' ▾';
+            cell.dataset.sort = 'down';
+          }
+        } else {
+          const arrow = document.createElement('span');
+          arrow.className = 'table__arrow';
+          arrow.textContent = ' ▾';
+          cell.append(arrow);
+          cell.dataset.sort = 'down';
+        }
+
+        sortTable(cell, list, cell.dataset.sort);
+      }
+    });
+  };
+
   const modalControl = (btnAdd, formOverlay) => {
     const openModal = () => {
       formOverlay.classList.add('is-visible');
@@ -362,39 +396,8 @@ const data = [
     deleteControl(btnDel, list);
     formControl(form, list, closeModal);
 
-    thead.addEventListener('click', e => {
-      const target = e.target;
-      if (target.closest('.table__name') || target.closest('.table__surname')) {
-        const cell = target.closest('.table__name') ??
-          target.closest('.table__surname');
-        const oldArrow = thead.querySelector('.table__arrow');
-        const cellArrow = cell.querySelector('.table__arrow');
-
-        if (oldArrow && oldArrow !== cellArrow) {
-          oldArrow.remove();
-        }
-
-        if (cellArrow) {
-          if (cell.dataset.sort === 'down') {
-            cellArrow.textContent = ' ▴';
-            cell.dataset.sort = 'up';
-          } else if (cell.dataset.sort === 'up') {
-            cellArrow.textContent = ' ▾';
-            cell.dataset.sort = 'down';
-          }
-        } else {
-          const arrow = document.createElement('span');
-          arrow.className = 'table__arrow';
-          arrow.textContent = ' ▾';
-          cell.append(arrow);
-          cell.dataset.sort = 'down';
-        }
-
-        sortTable(cell, list, cell.dataset.sort);
-      }
-    });
+    sortTableControl(thead, list);
   };
-
 
   window.phoneBookInit = init;
 }
