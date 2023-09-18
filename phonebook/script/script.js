@@ -1,32 +1,46 @@
 'use strict';
 
-const data = [
-  {
-    name: 'Иван',
-    surname: 'Петров',
-    phone: '+79514545454',
-  },
-  {
-    name: 'Игорь',
-    surname: 'Семёнов',
-    phone: '+79999999999',
-  },
-  {
-    name: 'Семён',
-    surname: 'Иванов',
-    phone: '+79800252525',
-  },
-  {
-    name: 'Мария',
-    surname: 'Попова',
-    phone: '+79876543210',
-  },
-];
+{
+  const data = [
+    {
+      name: 'Иван',
+      surname: 'Петров',
+      phone: '+79514545454',
+    },
+    {
+      name: 'Игорь',
+      surname: 'Семёнов',
+      phone: '+79999999999',
+    },
+    {
+      name: 'Семён',
+      surname: 'Иванов',
+      phone: '+79800252525',
+    },
+    {
+      name: 'Мария',
+      surname: 'Попова',
+      phone: '+79876543210',
+    },
+  ];
+
+  localStorage.setItem('contacts', JSON.stringify(data));
+}
 
 {
-  const addContactData = (contact) => {
-    data.push(contact);
-    console.log('data: ', data);
+  const getStorage = key => JSON.parse(localStorage.getItem(key)) ?? [];
+
+  const setStorage = (key, obj) => {
+    const data = getStorage(key);
+    data.push(obj);
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+
+  const removeStorage = (key, phone) => {
+    const data = getStorage(key);
+    const index = data.findIndex(item => item.phone === phone);
+    data.splice(index, 1);
+    localStorage.setItem(key, JSON.stringify(data));
   };
 
   const createContainer = () => {
@@ -93,12 +107,19 @@ const data = [
     const thead = document.createElement('thead');
     const tbody = document.createElement('tbody');
 
+    const sortTable = JSON.parse(localStorage.getItem('sort'));
+    const sortName = sortTable?.[0] === 'table__name' ?
+      `data-sort="${sortTable[1]}"` : '';
+    const sortSurname = sortTable?.[0] === 'table__surname' ?
+      `data-sort="${sortTable[1]}"` : '';
+
+
     table.classList.add('table', 'table-striped');
     thead.insertAdjacentHTML('beforeend', `
       <tr>
         <th class="delete">Удалить</th>
-        <th class="table__name">Имя</th>
-        <th class="table__surname">Фамилия</th>
+        <th class="table__name" ${sortName}>Имя</th>
+        <th class="table__surname"${sortSurname}>Фамилия</th>
         <th>Телефон</th>
         <th></th>
       </tr>
@@ -263,6 +284,26 @@ const data = [
     });
   };
 
+  const createSortArrow = (cell, cellArrow = null) => {
+    if (cellArrow) {
+      if (cell.dataset.sort === 'down') {
+        cellArrow.textContent = ' ▴';
+        cell.dataset.sort = 'up';
+      } else if (cell.dataset.sort === 'up') {
+        cellArrow.textContent = ' ▾';
+        cell.dataset.sort = 'down';
+      }
+    } else {
+      const arrow = document.createElement('span');
+      arrow.className = 'table__arrow';
+      arrow.textContent = cell?.dataset?.sort === 'up' ? ' ▴' : ' ▾';
+      cell.append(arrow);
+      if (!cell.dataset.sort) {
+        cell.dataset.sort = 'down';
+      }
+    }
+  };
+
   const sortTable = (target, list, arrow) => {
     const i = target.classList.contains('table__name') ? 1 : 2;
     let rows = Array.from(list.rows);
@@ -284,7 +325,18 @@ const data = [
     list.append(...rows);
   };
 
+  const sortTableRender = (thead, list) => {
+    const cell = thead.querySelector('[data-sort]');
+
+    if (cell?.dataset?.sort === 'down' || cell?.dataset?.sort === 'up') {
+      createSortArrow(cell);
+      sortTable(cell, list, cell.dataset.sort);
+    }
+  };
+
   const sortTableControl = (thead, list) => {
+    sortTableRender(thead, list);
+
     thead.addEventListener('click', e => {
       const target = e.target;
       if (target.closest('.table__name') || target.closest('.table__surname')) {
@@ -294,26 +346,18 @@ const data = [
         const cellArrow = cell.querySelector('.table__arrow');
 
         if (oldArrow && oldArrow !== cellArrow) {
+          oldArrow.closest('th').removeAttribute('data-sort');
           oldArrow.remove();
         }
 
-        if (cellArrow) {
-          if (cell.dataset.sort === 'down') {
-            cellArrow.textContent = ' ▴';
-            cell.dataset.sort = 'up';
-          } else if (cell.dataset.sort === 'up') {
-            cellArrow.textContent = ' ▾';
-            cell.dataset.sort = 'down';
-          }
-        } else {
-          const arrow = document.createElement('span');
-          arrow.className = 'table__arrow';
-          arrow.textContent = ' ▾';
-          cell.append(arrow);
-          cell.dataset.sort = 'down';
-        }
+        createSortArrow(cell, cellArrow);
 
         sortTable(cell, list, cell.dataset.sort);
+
+        localStorage.setItem('sort', JSON.stringify([
+          cell.className,
+          cell.dataset.sort,
+        ]));
       }
     });
   };
@@ -348,8 +392,12 @@ const data = [
     });
 
     list.addEventListener('click', e => {
+      const contact = e.target.closest('.contact');
+      const phone = contact.querySelector('a').textContent;
+
       if (e.target.closest('.del-icon')) {
-        e.target.closest('.contact').remove();
+        removeStorage('contacts', phone);
+        contact.remove();
       }
     });
   };
@@ -365,10 +413,9 @@ const data = [
       const formData = new FormData(e.target);
 
       const newContact = Object.fromEntries(formData);
-      console.log('newContact: ', newContact);
 
       addContactPage(newContact, list);
-      addContactData(newContact);
+      setStorage('contacts', newContact);
 
       form.reset();
       closeModal();
@@ -388,7 +435,7 @@ const data = [
     } = renderPhoneBook(app, title);
 
     // Функционал
-    const allRow = renderContacts(list, data);
+    const allRow = renderContacts(list, getStorage('contacts'));
     const { closeModal } = modalControl(btnAdd, formOverlay);
 
     hoverRow(allRow, logo);
