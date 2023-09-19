@@ -24,7 +24,7 @@
     },
   ];
 
-  // localStorage.setItem('contacts', JSON.stringify(data));
+  localStorage.setItem('contacts', JSON.stringify(data));
 }
 
 {
@@ -362,7 +362,7 @@
     });
   };
 
-  const modalControl = (btnAdd, formOverlay) => {
+  const modalControl = (btnAdd, btnDel, list, formOverlay) => {
     const openModal = () => {
       formOverlay.classList.add('is-visible');
     };
@@ -371,7 +371,15 @@
       formOverlay.classList.remove('is-visible');
     };
 
-    btnAdd.addEventListener('click', openModal);
+    btnAdd.addEventListener('click', () => {
+      if (btnDel.classList.contains('active')) {
+        list.querySelectorAll('.delete').forEach(del => {
+          btnDel.classList.remove('active');
+          del.classList.remove('is-visible');
+        });
+      }
+      openModal();
+    });
 
     formOverlay.addEventListener('click', e => {
       if (e.target === formOverlay || e.target.classList.contains('close')) {
@@ -386,7 +394,9 @@
 
   const deleteControl = (btnDel, list) => {
     btnDel.addEventListener('click', () => {
-      document.querySelectorAll('.delete').forEach(del => {
+      btnDel.classList.toggle('active');
+
+      list.querySelectorAll('.delete').forEach(del => {
         del.classList.toggle('is-visible');
       });
     });
@@ -436,7 +446,7 @@
 
     // Функционал
     const allRow = renderContacts(list, getStorage('contacts'));
-    const { closeModal } = modalControl(btnAdd, formOverlay);
+    const { closeModal } = modalControl(btnAdd, btnDel, list, formOverlay);
 
     hoverRow(allRow, logo);
 
