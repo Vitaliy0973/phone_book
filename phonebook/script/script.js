@@ -24,7 +24,7 @@
     },
   ];
 
-  localStorage.setItem('contacts', JSON.stringify(data));
+  // localStorage.setItem('contacts', JSON.stringify(data));
 }
 
 {
