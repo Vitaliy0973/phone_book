@@ -1,21 +1,21 @@
 const createSortArrow = (cell, cellArrow = null) => {
-  if (cellArrow) {
-    if (cell.dataset.sort === 'down') {
-      cellArrow.textContent = ' ▴';
-      cell.dataset.sort = 'up';
-    } else if (cell.dataset.sort === 'up') {
-      cellArrow.textContent = ' ▾';
-      cell.dataset.sort = 'down';
-    }
-  } else {
-    const arrow = document.createElement('span');
-    arrow.className = 'table__arrow';
-    arrow.textContent = cell?.dataset?.sort === 'up' ? ' ▴' : ' ▾';
-    cell.append(arrow);
-    if (!cell.dataset.sort) {
-      cell.dataset.sort = 'down';
-    }
+  const arrow = !!cellArrow;
+  const sort = cell.dataset.sort || 'down';
+
+  if (!arrow) {
+    cellArrow = document.createElement('span');
+    cellArrow.className = 'table__arrow';
+    cell.append(cellArrow);
   }
+
+  if (!arrow && sort === 'down' || arrow && sort === 'up') {
+    cellArrow.textContent = ' ▾';
+    cell.dataset.sort = 'down';
+    return;
+  }
+
+  cellArrow.textContent = ' ▴';
+  cell.dataset.sort = 'up';
 };
 
 const sortTable = (target, list, arrow) => {
